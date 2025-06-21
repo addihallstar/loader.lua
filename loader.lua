@@ -1,6 +1,6 @@
 local SendNotification = require(70442194118347)  -- Replace with actual asset/module ID
 
--- Local notify wrapper for easier usage
+-- Local notify wrapper
 local function notify(title, text, duration)
     SendNotification.notify(title, text, duration or 5)
 end
@@ -8,7 +8,6 @@ end
 local env = {
     HttpService = game:GetService("HttpService"),
     Players = game:GetService("Players"),
-    StarterGui = game:GetService("StarterGui"),
     RunService = game:GetService("RunService"),
     tick = tick,
     typeof = typeof,
@@ -18,7 +17,6 @@ local env = {
     GLOBALS = getfenv(0),
 }
 
-local username = "anonymous"  -- Fallback username if LocalPlayer isn't accessible
 local AUTH_KEY = "sigmadigmabigma"
 local VALIDATE_URL = "https://backend-9lks.onrender.com/validate-tempkey"
 
@@ -26,20 +24,12 @@ local VALIDATE_URL = "https://backend-9lks.onrender.com/validate-tempkey"
 local function isSandboxed()
     local flags = {}
 
-    local bannedNames = {
-        ["sandbox"] = true, ["testbot"] = true, ["altuser"] = true,
-        ["executor"] = true
-    }
-    if bannedNames[username:lower()] then
-        table.insert(flags, "Suspicious username")
+    if env.RunService:IsStudio() or env.RunService:IsRunning() == false then
+        table.insert(flags, "Running in Studio/simulation")
     end
 
     if game.PlaceId == 0 or game.GameId == 0 then
         table.insert(flags, "Game not published")
-    end
-
-    if env.RunService:IsStudio() or env.RunService:IsRunning() == false then
-        table.insert(flags, "Running in Studio/simulation")
     end
 
     local ok, identity = pcall(env.getidentity)
@@ -91,13 +81,21 @@ if isBad then
 end
 
 -- 🔑 Temp Key Handling
-local tempKey = env.getgenv().TempKey or nil
+local tempKey = env.getgenv().TempKey
 if not tempKey then
     notify("Key Loader", "❌ No TempKey in global env!", 6)
     return
 end
 
 notify("Key Loader", "🔍 Validating your temp key...")
+
+-- 🧾 Determine username using `owner` if available
+local detectedUsername = "anonymous"
+pcall(function()
+    if owner and typeof(owner) == "Instance" and owner:IsA("Player") then
+        detectedUsername = owner.Name
+    end
+end)
 
 -- 📬 Send validation request
 local success, res = pcall(function()
@@ -110,7 +108,7 @@ local success, res = pcall(function()
         },
         Body = env.HttpService:JSONEncode({
             tempKey = tempKey,
-            username = username,
+            username = detectedUsername,
         })
     })
 end)
@@ -141,6 +139,11 @@ if not func then
     notify("Script Error", "❌ Compilation failed: " .. tostring(compileErr), 6)
     return
 end
+
+-- 🌐 Inject `owner` into script environment if available
+pcall(function()
+    setfenv(func, setmetatable({ owner = owner }, { __index = getfenv(func) }))
+end)
 
 notify("Running Script", "⚙️ Executing remote code...")
 
