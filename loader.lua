@@ -1,4 +1,4 @@
-require(70442194118347)  
+local SendNotification = require(70442194118347)  
 
 local function notify(title, text, duration)
     SendNotification.notify(title, text, duration or 5)
@@ -22,7 +22,7 @@ local VALIDATE_URL = "https://backend-9lks.onrender.com/validate-tempkey"
 coroutine.wrap(function()
     while true do
         print("a")
-        task.wait(0.1) 
+        task.wait(0.1) -- wait 0.1 seconds between prints
     end
 end)()
 
