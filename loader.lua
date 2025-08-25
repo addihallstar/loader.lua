@@ -88,7 +88,7 @@ end
 -- TempKey check
 local tempKey = env.getgenv().TempKey
 if not tempKey then
-    notify("Key Loader", "❌ No TempKey in global env!", 6)
+    notify("Key Loader", "❌ No Key in global env!", 6)
     return
 end
 
@@ -125,7 +125,7 @@ end
 local data = env.HttpService:JSONDecode(res.Body)
 
 if not data.valid then
-    notify("Invalid Key", "❌ TempKey is invalid or expired.", 6)
+    notify("Invalid Key", "❌ Key is invalid or expired.", 6)
     return
 end
 
