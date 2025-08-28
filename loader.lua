@@ -74,6 +74,58 @@ local function isSandboxed()
         table.insert(flags, "Script run from sandboxed file")
     end
 
+    ----------------------------------------------------------------
+    -- 6. Integrity check of critical functions
+    ----------------------------------------------------------------
+    local originals = {
+        getfenv = getfenv,
+        setfenv = setfenv,
+        require = require,
+        pairs = pairs,
+        next = next,
+        tostring = tostring,
+        typeof = typeof,
+        pcall = pcall,
+        xpcall = xpcall,
+        loadstring = loadstring,
+    }
+    for name, ref in pairs(originals) do
+        if _G[name] ~= ref then
+            table.insert(flags, "Function " .. name .. " was hooked/replaced")
+        end
+    end
+
+
+    local mt = getrawmetatable(game)
+    if mt then
+        local okMT, err = pcall(function()
+            local backup = mt.__namecall
+            local caught = false
+            mt.__namecall = function(self, ...)
+                caught = true
+                return backup(self, ...)
+            end
+
+            pcall(function()
+                game:GetService("Players"):GetPlayers()
+            end)
+
+            mt.__namecall = backup
+            if caught then
+                table.insert(flags, "__namecall hooked/tampered")
+            end
+        end)
+        if not okMT then
+            table.insert(flags, "Failed metamethod test: " .. tostring(err))
+        end
+    end
+
+
+    local env = getfenv(0)
+    if env ~= _G then
+        table.insert(flags, "Unexpected environment table detected")
+    end
+    
     return #flags > 0, flags
 end
 
